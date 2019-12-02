@@ -1,3 +1,7 @@
+"""Commands relating to automatically adding and removing roles via the user reacting
+to a specific messages. Currently used for pronouns and the default entry role.
+"""
+
 import logging
 
 from discord.utils import get
@@ -13,6 +17,7 @@ log = logging.getLogger('bot.' + __name__)
 
 
 class Roles(Cog):
+    """Use reactions to add or remove a role from yourself."""
     def __init__(self, bot: Bot):
         self.bot = bot
         self.config = config
@@ -20,6 +25,7 @@ class Roles(Cog):
 
     @Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        """Add a role based on the message reacted to and what emoji."""
         r_channel = self.bot.get_channel(payload.channel_id)
         r_guild = r_channel.guild
         r_user = self.bot.get_user(payload.user_id)
@@ -43,6 +49,7 @@ class Roles(Cog):
 
     @Cog.listener()
     async def on_raw_reaction_remove(self, payload):
+        """Remove a role based on the message reacted to and what emoji."""
         r_channel = self.bot.get_channel(payload.channel_id)
         r_guild = r_channel.guild
         r_user = self.bot.get_user(payload.user_id)
