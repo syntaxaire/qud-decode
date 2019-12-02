@@ -27,6 +27,9 @@ async def create_http_session():
 with open("config.yml") as f:
     config = yaml.safe_load(f)
 
+with open("rolesconfig.yml") as f:
+    rolesconfig = yaml.safe_load(f)
+
 http_session = asyncio.get_event_loop().run_until_complete(create_http_session())
 
 gameroot = GameRoot(config['Qud install folder'])

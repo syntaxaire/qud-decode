@@ -1,0 +1,13 @@
+# Message to read reactions from
+rolemessageid: 650878521044107265
+entrymessageid: 645710480324952084
+
+# The emoji and what roles they correspond to
+Roles:
+    mehmet: He/Him
+    qgirldab: She/Her
+    slog: They/Them
+    asphodel: Other
+
+EntryRole:
+    waterskin: Moon King
