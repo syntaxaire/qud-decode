@@ -9,7 +9,7 @@ from discord.ext.commands import Bot, BucketType, Cog, CommandOnCooldown, Contex
 from fuzzywuzzy import process
 from helpers.blueprint_search import find_closest_blueprint, find_exact_blueprint
 
-from shared import qindex
+from shared import config, qindex
 
 log = logging.getLogger('bot.' + __name__)
 
@@ -63,6 +63,8 @@ class BlueprintQuery(Cog):
     async def xml(self, ctx: Context, *args):
         """Send the source XML for a Qud blueprint to the channel."""
         log.info(f'({ctx.message.channel}) <{ctx.message.author}> {ctx.message.content}')
+        if ctx.message.channel.id != config['Spam channel']:
+            return await ctx.send('Sorry, this command can only be used in a bot spam channel.')
         query = ' '.join(args)
         obj = find_exact_blueprint(query)
         if obj is None:
@@ -78,7 +80,10 @@ class BlueprintQuery(Cog):
             ctx.command.reset_cooldown(ctx)
             return await ctx.send(msg)
         # object was found
-        msg = f'```xml\n{obj.source}\n```'
+        if len(obj.source) > 1980:
+            msg = "Sorry, the XML source of that blueprint is too long to send."
+            return await ctx.send(msg)
+        msg = f'```xml\n  {obj.source}\n```'
         await ctx.send(msg)
 
     @xml.error
