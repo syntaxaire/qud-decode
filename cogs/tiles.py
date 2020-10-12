@@ -1,14 +1,12 @@
 """Commands for sending rendered game tiles as attachments."""
-import asyncio
-import concurrent.futures
 import logging
 import random
 
 from discord import File
 from discord.ext.commands import Cog, Context, command
-from fuzzywuzzy import process
 from hagadias.qudtile import QUD_COLORS, QudTile
 
+from helpers.blueprint_search import find_closest_blueprint, find_exact_blueprint
 from shared import qindex
 
 log = logging.getLogger('bot.' + __name__)
@@ -30,12 +28,7 @@ class Tiles(Cog):
             query, recolor = [q.strip() for q in query.split('recolor')]
         else:
             recolor = ''
-        # search for exact matches first
-        obj = None
-        for key, val in qindex.items():
-            if query.lower() == key.lower():
-                obj = val
-                break
+        obj = find_exact_blueprint(query)
         if obj is None:
             # no matching blueprint name
             # but, is there a blueprint with a matching displayname?
@@ -48,14 +41,7 @@ class Tiles(Cog):
                       " short to search."
                 return await ctx.send(msg)
             # there was no exact match, and the query wasn't too short, so offer an alternative
-            loop = asyncio.get_running_loop()
-            # doing a fuzzy match on the qindex keys can take about 2 seconds, so
-            # run in an executor so we can keep processing other commands in the meantime
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                nearest = await loop.run_in_executor(pool,
-                                                     process.extractOne,
-                                                     query,
-                                                     list(qindex))
+            nearest = await find_closest_blueprint(query)
             msg = "Sorry, nothing matching that name was found. The closest blueprint name is" \
                   f" `{nearest[0]}`."
             await ctx.send(msg)
