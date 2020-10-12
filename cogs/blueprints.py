@@ -5,8 +5,9 @@ import logging
 from functools import partial
 
 from discord import Embed
-from discord.ext.commands import Bot, Cog, Context, command
+from discord.ext.commands import Bot, BucketType, Cog, CommandOnCooldown, Context, command, cooldown
 from fuzzywuzzy import process
+from helpers.blueprint_search import find_closest_blueprint, find_exact_blueprint
 
 from shared import qindex
 
@@ -56,3 +57,36 @@ class BlueprintQuery(Cog):
                         value='\n'.join(field),
                         inline=True)
         await ctx.send(embed=embed)
+
+    @command()
+    @cooldown(1, 10, BucketType.user)
+    async def xml(self, ctx: Context, *args):
+        """Send the source XML for a Qud blueprint to the channel."""
+        log.info(f'({ctx.message.channel}) <{ctx.message.author}> {ctx.message.content}')
+        query = ' '.join(args)
+        obj = find_exact_blueprint(query)
+        if obj is None:
+            # no matching blueprint name
+            # but, is there a blueprint with a matching displayname?
+            for blueprint, qobject in qindex.items():
+                if qobject.displayname.lower() == query.lower():
+                    obj = qobject
+        if obj is None:
+            nearest = await find_closest_blueprint(query)
+            msg = "Sorry, nothing matching that name was found. The closest blueprint name is" \
+                  f" `{nearest[0]}`."
+            ctx.command.reset_cooldown(ctx)
+            return await ctx.send(msg)
+        # object was found
+        msg = f'```xml\n{obj.source}\n```'
+        await ctx.send(msg)
+
+    @xml.error
+    async def xml_error(self, ctx, error):
+        """Handle errors for the xml command."""
+        if isinstance(error, CommandOnCooldown):
+            msg = f'Please wait another {error.retry_after:.0f} seconds before ' \
+                  'using this command again.'
+            await ctx.send(msg)
+        else:
+            raise error
